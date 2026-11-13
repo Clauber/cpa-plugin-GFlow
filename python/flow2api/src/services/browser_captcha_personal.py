@@ -2548,7 +2548,7 @@ class BrowserCaptchaService:
             )
         if not NODRIVER_AVAILABLE or uc is None:
             raise RuntimeError(
-                "nodriver 未安装或不可用。请手动安装: pip install nodriver"  # zh-compat: shared text in python/flow2api/src/services/browser_captcha.py
+                "nodriver is not installed or unavailable. Install it manually: pip install nodriver"
             )
 
     async def _run_with_timeout(self, awaitable, timeout_seconds: float, label: str):
@@ -2557,7 +2557,7 @@ class BrowserCaptchaService:
         try:
             return await asyncio.wait_for(awaitable, timeout=effective_timeout)
         except asyncio.TimeoutError as e:
-            raise TimeoutError(f"{label} 超时 ({effective_timeout:.1f}s)") from e  # zh-compat: shared text in README.md, README.zh-CN.md, browser-extension/background.js, docs/project-control-v1.md, python/browser_diagnostics.py, python/extension_sync.py, python/flow2api/config/setting.toml, python/flow2api/config/setting_example.toml, python/flow2api/src/api/admin.py, python/flow2api/src/core/config.py, python/flow2api/src/core/models.py, python/flow2api/src/services/browser_captcha.py, python/flow2api/src/services/flow_client.py, python/flow2api/src/services/generation_handler.py, python/flow2api/src/services/twocaptcha.py, python/generation_lifecycle.py, python/worker.py, static/manage.html, tests/test_management_ui.py
+            raise TimeoutError(f"{label} timed out ({effective_timeout:.1f}s)") from e
 
     async def _wait_for_display_ready(
         self, display_value: str, timeout_seconds: float = 5.0
@@ -2583,7 +2583,7 @@ class BrowserCaptchaService:
             await asyncio.sleep(0.1)
 
         raise RuntimeError(
-            f"DISPLAY={display_value} 对应的 X display socket 未就绪: {socket_path}"  # zh-compat: shared text in python/flow2api/src/services/browser_captcha.py, python/flow2api/src/services/flow_client.py
+            f"The X display socket for DISPLAY={display_value} is not ready: {socket_path}"
         )
 
     def _mark_browser_health(self, healthy: bool):
@@ -2674,7 +2674,7 @@ class BrowserCaptchaService:
             else ""
         )
         raise RuntimeError(
-            f"浏览器启动冷却中，请 {remaining_seconds:.1f}s 后重试{suffix}"  # zh-compat: shared text in browser-extension/background.js, python/extension_sync.py, python/flow2api/src/services/browser_captcha.py, python/flow2api/src/services/flow_client.py, python/flow2api/src/services/generation_handler.py, static/manage.html
+            f"Browser startup is cooling down; retry in {remaining_seconds:.1f}s{suffix}"
         )
 
     @staticmethod
@@ -9814,7 +9814,7 @@ class BrowserCaptchaService:
                 except Exception:
                     continue
 
-        raise RuntimeError(f"无法加载 reCAPTCHA bootstrap: {last_error or '未知错误'}")  # zh-compat: shared text in python/flow2api/src/api/admin.py, python/flow2api/src/services/file_cache.py, python/flow2api/src/services/generation_handler.py
+        raise RuntimeError(f"Could not load the reCAPTCHA bootstrap: {last_error or 'unknown error'}")
 
     async def _inject_recaptcha_bootstrap_script(
         self,
@@ -12359,7 +12359,7 @@ class BrowserCaptchaService:
                 "current_ip_address": last_snapshot.get("current_ip_address") or "",
                 "page_title": last_snapshot.get("title") or "",
                 "page_url": last_snapshot.get("url") or "",
-                "error": last_snapshot.get("error") or "未在页面中读取到分数",  # zh-compat: shared text in python/flow2api/src/services/browser_captcha.py
+                "error": last_snapshot.get("error") or "No score was read from the page",
             },
         }
 
@@ -13963,7 +13963,7 @@ class BrowserCaptchaService:
     ) -> Dict[str, Any]:
         """Export current Google/Flow Cookies from the reserved account context."""
         if not token_id:
-            raise ValueError("Cookie 刷新必须指定 Token ID")  # zh-compat: shared text in python/flow2api/src/services/browser_captcha.py
+            raise ValueError("Cookie refresh requires a Token ID")
         self._mark_runtime_active()
         await self.initialize()
         slot_id, resident_info = await self._ensure_resident_tab(
@@ -13972,14 +13972,14 @@ class BrowserCaptchaService:
         consumed = False
         try:
             if not slot_id or not resident_info or not resident_info.tab:
-                raise RuntimeError("账号浏览器标签页不可用")  # zh-compat: shared text in tests/test_refresh_account_state.py
+                raise RuntimeError("The account browser tab is unavailable")
             async with resident_info.solve_lock:
                 await self._consume_resident_slot_reservation(slot_id, resident_info)
                 consumed = True
                 if not await self._apply_token_cookie_binding(
                     resident_info, token_id, label="cookie_refresh", acquire_lock=False
                 ):
-                    raise RuntimeError("账号浏览器 Cookie 绑定失败")  # zh-compat: shared text in tests/test_refresh_account_state.py
+                    raise RuntimeError("Binding Cookies to the account browser failed")
                 if resident_info.token_id != int(token_id):
                     raise RuntimeError("Token bound to the browser tab is inconsistent")
                 resident_info.recaptcha_ready = False
@@ -14004,7 +14004,7 @@ class BrowserCaptchaService:
                 if not isinstance(identity, dict) or identity.get("ready") != "complete":
                     raise TimeoutError("Flow Cookie refresh page load timed out")
                 if identity.get("host") != "flow.google.com" or not identity.get("email"):
-                    raise RuntimeError("Flow 登录已失效，请重新同步 Google Cookies")  # zh-compat: shared text in python/flow2api/src/services/browser_captcha.py, python/flow2api/src/services/token_manager.py, python/generation_errors.py
+                    raise RuntimeError("Flow login expired; sync Google Cookies again")
                 cookies = await self._get_browser_cookies(
                     label="cookie_refresh_export",
                     browser_context_id=resident_info.browser_context_id,
@@ -14079,9 +14079,9 @@ class BrowserCaptchaService:
     def get_token_pool_status(self) -> Dict[str, Any]:
         return {
             "token_pool_enabled": bool(getattr(config, "token_pool_enabled", False)),
-            "token_pool_status": "未启用"  # zh-compat: shared text in python/project_control.py, tests/test_project_control.py
+            "token_pool_status": "disabled"
             if not getattr(config, "token_pool_enabled", False)
-            else "空闲",  # zh-compat: shared text in python/flow2api/config/setting.toml, python/flow2api/config/setting_example.toml, python/flow2api/src/core/config.py, python/flow2api/src/core/models.py, python/flow2api/src/services/browser_captcha.py
+            else "idle",
             "token_pool_total_ready": 0,
             "token_pool_bucket_count": 0,
             "token_pool_waiting_requests": 0,
@@ -14277,7 +14277,7 @@ class BrowserCaptchaService:
                         )
                         return token
 
-                    raise RuntimeError("自定义 token 获取失败（返回 null）")  # zh-compat: shared text in python/flow2api/src/services/generation_handler.py, static/manage.html
+                    raise RuntimeError("Custom token request failed (returned null)")
                 except Exception as e:
                     debug_logger.log_warning(
                         f"[BrowserCaptcha] [Custom] Attempt {attempt + 1}/{max_retries} failed: {str(e)}"
@@ -16265,7 +16265,7 @@ class _PersonalBrowserPoolService:
         self, project_id: Optional[str], *, token_id: int
     ) -> Dict[str, Any]:
         if not token_id:
-            raise ValueError("Cookie 刷新必须指定 Token ID")  # zh-compat: shared text in python/flow2api/src/services/browser_captcha.py
+            raise ValueError("Cookie refresh requires a Token ID")
         await self._ensure_workers()
         excluded_indexes: set[int] = set()
         last_error = None
@@ -16345,7 +16345,7 @@ class _PersonalBrowserPoolService:
         if not self._is_token_pool_enabled():
             return {
                 "token_pool_enabled": False,
-                "token_pool_status": "未启用",  # zh-compat: shared text in python/project_control.py, tests/test_project_control.py
+                "token_pool_status": "disabled",
                 "token_pool_total_ready": 0,
                 "token_pool_bucket_count": 0,
                 "token_pool_waiting_requests": 0,
@@ -16416,7 +16416,7 @@ class _PersonalBrowserPoolService:
         bucket_count = len(bucket_details)
 
         if total_ready > 0:
-            status_text = "运行中"  # zh-compat: shared text in browser-extension/background.js
+            status_text = "running"
         elif refill_inflight > 0 and waiting_requests > 0:
             status_text = "Replenishing"
         elif refill_inflight > 0:
@@ -16424,7 +16424,7 @@ class _PersonalBrowserPoolService:
         elif waiting_requests > 0:
             status_text = "Waiting"
         else:
-            status_text = "空闲"  # zh-compat: shared text in python/flow2api/config/setting.toml, python/flow2api/config/setting_example.toml, python/flow2api/src/core/config.py, python/flow2api/src/core/models.py, python/flow2api/src/services/browser_captcha.py
+            status_text = "idle"
 
         return {
             "token_pool_enabled": True,
