@@ -29,7 +29,7 @@ def generation_error(payload):
         code, status = "gflow_unusual_activity", 403
         message = ("Google Flow rejected this request (unusual activity, PUBLIC_ERROR_UNUSUAL_ACTIVITY). "
                    "Check the account status on a logged-in Flow page; no automatic retry was made.")
-    elif any(marker in message for marker in ("Google Cookie 已失效", "Flow 登录已失效", "Google Cookie expired", "Flow login expired", "gflow_session_expired")):  # zh-compat: pinned flow_frontend.py/browser_captcha.py and personal browser errors
+    elif any(marker in message for marker in ("Google Cookie 已失效", "Flow 登录已失效", "Google Cookie expired", "Flow login expired", "gflow_session_expired")):  # zh-compat: pinned flow_frontend.py and browser_captcha.py; English from load_balancer.py and browser_captcha_personal.py
         code, status = "gflow_session_expired", 401
         message = "The GFlow Google login session expired. Sync Cookies again through the login helper in a logged-in Flow browser; changing only the EasyCPA address or key cannot restore it."
     return {"message": message, "status_code": status,

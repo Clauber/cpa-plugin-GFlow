@@ -759,8 +759,8 @@ class TokenManager:
             # account credentials expired. Only explicit authentication failure
             # may persistently disable an account.
             auth_markers = (
-                "401", "UNAUTHENTICATED", "Google Cookie 已失效", "Google Cookie expired",  # zh-compat: pinned flow_frontend.py
-                "Flow 登录已失效", "Flow 登录认证失败", "Flow login expired", "Flow login authentication failed",  # zh-compat: pinned browser_captcha.py/flow_frontend.py and personal browser
+                "401", "UNAUTHENTICATED", "Google Cookie 已失效",  # zh-compat: pinned flow_frontend.py
+                "Flow 登录已失效", "Flow 登录认证失败", "Flow login expired",  # zh-compat: pinned browser_captcha.py and flow_frontend.py; English from browser_captcha_personal.py
             )
             if any(marker in str(reason) for reason in failure_reasons for marker in auth_markers):
                 debug_logger.log_error(

@@ -36,3 +36,7 @@ class RefreshStateTests(unittest.IsolatedAsyncioTestCase):
         change = manager.db.update_token.await_args.kwargs
         self.assertFalse(change["is_active"])
         self.assertEqual(change["ban_reason"], "session_expired")
+
+    async def test_personal_browser_login_expiry_records_session_expired(self):
+        manager = await self.run_failure("RuntimeError: Flow login expired; sync Google Cookies again")
+        self.assertEqual(manager.db.update_token.await_args.kwargs["ban_reason"], "session_expired")

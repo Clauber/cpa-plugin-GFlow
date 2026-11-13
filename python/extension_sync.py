@@ -32,7 +32,7 @@ def _classify_sync_failure(error, stage="session"):
             "Connection to Google Flow timed out. Check the GFlow proxy settings and retry.",
             code="gflow_upstream_timeout", status_code=504, stage=stage,
         )
-    if any(term in text for term in ("code=401", "code=403", "public_error_user_not_authenticated", "登录认证失败", "login authentication failed")):  # zh-compat: pinned flow_frontend.py authentication errors
+    if any(term in text for term in ("code=401", "code=403", "public_error_user_not_authenticated", "登录认证失败")):  # zh-compat: pinned flow_frontend.py authentication errors
         return ExtensionSyncError(
             "Google rejected the current login session. Open Flow in the same browser, confirm the project page opens, refresh it, then click Save and sync now. Use separate browser profiles for multiple Google accounts.",
             code="gflow_google_auth_rejected", status_code=422, stage=stage,
@@ -71,7 +71,7 @@ def classify_sync_failure(error, stage="session"):
     rpc = re.search(r"\brpc=(nzlxg|jHPbke)\b", text)
     if rpc:
         diagnostic.update(phase="rpc", rpc=rpc.group(1))
-    elif "bootstrap" in text.lower() or "登录态被重定向" in text or "login session redirected" in text.lower():  # zh-compat: pinned flow_frontend.py redirects
+    elif "bootstrap" in text.lower() or "登录态被重定向" in text:  # zh-compat: pinned flow_frontend.py redirects
         diagnostic["phase"] = "bootstrap"
     code = re.search(r"\bcode=(\d{1,3})\b", text)
     if code:
@@ -176,8 +176,8 @@ async def _validate_and_save(service, email, session_token, cookies):
         if refreshed.get("success") is not True:
             reason = str(refreshed.get("error") or "")
             failure.diagnostic["cookie_refresh"] = (
-                "missing_identity" if any(marker in reason for marker in ("未返回已登录账号", "returned no logged-in account")) else  # zh-compat: pinned protocol_login.py identity error
-                "account_mismatch" if any(marker in reason for marker in ("不一致", "does not match")) else  # zh-compat: pinned protocol_login.py account mismatch
+                "missing_identity" if "未返回已登录账号" in reason else  # zh-compat: pinned protocol_login.py identity error
+                "account_mismatch" if "不一致" in reason else  # zh-compat: pinned protocol_login.py account mismatch
                 "rejected"
             )
             raise failure from None
