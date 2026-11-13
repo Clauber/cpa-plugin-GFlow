@@ -10,6 +10,7 @@ the host lists gflow-project-control. The key never leaves the stage directory.
 """
 import argparse
 import json
+import os
 import secrets
 import shutil
 import socket
@@ -41,6 +42,8 @@ def start(host, archive, stage):
     plugins.mkdir(parents=True)
     shutil.copy2(host, stage / "cli-proxy-api.exe")
     with zipfile.ZipFile(archive) as bundle:
+        if bundle.namelist() != ["gflow.dll"]:
+            sys.exit("the plugin archive must contain only gflow.dll")
         (plugins / "gflow.dll").write_bytes(bundle.read("gflow.dll"))
     (stage / "auths").mkdir()
     with socket.socket() as probe:
@@ -70,9 +73,17 @@ plugins:
       enabled: true
       data_dir: {json.dumps(str(stage / "gflow-data"))}
 """, encoding="utf-8")
+    for name in ("tmp", "profile/Roaming", "profile/Local"):
+        (stage / name).mkdir(parents=True)
+    environment = os.environ.copy()
+    environment.update(TMP=str(stage / "tmp"), TEMP=str(stage / "tmp"), TMPDIR=str(stage / "tmp"),
+                       APPDATA=str(stage / "profile/Roaming"), LOCALAPPDATA=str(stage / "profile/Local"),
+                       PYTHONDONTWRITEBYTECODE="1")
+    for name in ("GFLOW_WORKER_BINARY", "GFLOW_DATA_DIR", "PYTHONPATH", "PYTHONHOME", "VIRTUAL_ENV"):
+        environment.pop(name, None)
     log = (stage / "host.log").open("wb")
     process = subprocess.Popen([str(stage / "cli-proxy-api.exe"), "-config", str(stage / "config.yaml"), "-local-model"],
-                               cwd=stage, stdout=log, stderr=subprocess.STDOUT,
+                               cwd=stage, env=environment, stdout=log, stderr=subprocess.STDOUT,
                                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     base = f"http://127.0.0.1:{port}"
     session = {"pid": process.pid, "port": port, "base": base, "api_key": api_key, "management_key": management_key,
