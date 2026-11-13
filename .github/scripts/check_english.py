@@ -12,7 +12,6 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-# CJK ideographs, CJK punctuation and full-width forms.
 CJK_RANGES = ((0x3400, 0x4DBF), (0x4E00, 0x9FFF), (0xF900, 0xFAFF), (0x3000, 0x303F), (0xFF01, 0xFF5E))
 CJK = re.compile("[" + "".join(f"{chr(low)}-{chr(high)}" for low, high in CJK_RANGES) + "]")
 MARKER = "zh-compat"
