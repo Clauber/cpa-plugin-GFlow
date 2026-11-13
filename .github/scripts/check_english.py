@@ -26,20 +26,37 @@ def strip_locales(value):
     return value
 
 
+def json_strings(value):
+    if isinstance(value, dict):
+        for key, item in value.items():
+            yield key
+            yield from json_strings(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from json_strings(item)
+    elif isinstance(value, str):
+        yield value
+
+
 def findings():
     pinned = set(json.loads((ROOT / "python/flow2api/upstream.json").read_text(encoding="utf-8"))["files"])
     tracked = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True).stdout
     for name in sorted(filter(None, tracked.decode("utf-8").split("\0"))):
         if name in pinned or name in EXEMPT or not (ROOT / name).is_file():
             continue
-        try:
-            text = (ROOT / name).read_text(encoding="utf-8")
-        except UnicodeDecodeError:
+        data = (ROOT / name).read_bytes()
+        if b"\0" in data:
             continue
+        try:
+            text = data.decode("utf-8")
+        except UnicodeDecodeError:
+            yield name, 0, "not UTF-8 text, so it cannot be checked"
+            continue
+        flagged = None
         if name.endswith(".json"):
-            text = json.dumps(strip_locales(json.loads(text)), ensure_ascii=False, indent=1)
+            flagged = [value for value in json_strings(strip_locales(json.loads(text))) if CJK.search(value)]
         for number, line in enumerate(text.splitlines(), 1):
-            if CJK.search(line) and MARKER not in line:
+            if CJK.search(line) and MARKER not in line and (flagged is None or any(value in line for value in flagged)):
                 yield name, number, line.strip()
 
 
