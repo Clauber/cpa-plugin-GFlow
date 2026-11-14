@@ -561,9 +561,11 @@
 
     function decodeHostLogin(raw) {
       if (!raw) return null;
-      if (raw.startsWith('enc::v1::')) {
+      // The management center writes enc::v2 (salt|host); enc::v1 added the user agent.
+      const version = raw.slice(0, 9);
+      if (version === 'enc::v1::' || version === 'enc::v2::') {
         const bytes = Uint8Array.from(atob(raw.slice(9)), character => character.charCodeAt(0));
-        const mask = new TextEncoder().encode('cli-proxy-api-webui::secure-storage|' + window.location.host + '|' + navigator.userAgent);
+        const mask = new TextEncoder().encode('cli-proxy-api-webui::secure-storage|' + window.location.host + (version === 'enc::v1::' ? '|' + navigator.userAgent : ''));
         raw = new TextDecoder().decode(bytes.map((value, index) => value ^ mask[index % mask.length]));
       }
       const saved = JSON.parse(raw);
