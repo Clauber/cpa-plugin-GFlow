@@ -82,14 +82,23 @@ const el = id => context.document.getElementById(id);
   clipboardDenied = false;
   console.log('PASS extension link remains a static public resource');
 
-  const mask = Buffer.from('cli-proxy-api-webui::secure-storage|' + location.host + '|synthetic-agent');
-  const encoded = Buffer.from(login);
-  for (let index = 0; index < encoded.length; index++) encoded[index] ^= mask[index % mask.length];
-  savedLogin = 'enc::v1::' + encoded.toString('base64');
+  const obfuscate = (prefix, salt) => {
+    const mask = Buffer.from(salt), encoded = Buffer.from(login);
+    for (let index = 0; index < encoded.length; index++) encoded[index] ^= mask[index % mask.length];
+    return prefix + encoded.toString('base64');
+  };
+  savedLogin = obfuscate('enc::v1::', 'cli-proxy-api-webui::secure-storage|' + location.host + '|synthetic-agent');
   await context.initializeManagement();
   assert.equal(el('stat-python-ver').textContent, 'Python 3.12.0');
   assert.ok(savedLogin.startsWith('enc::v1::'));
   console.log('PASS host obfuscated login is read without rewriting storage');
+
+  for (const id of ['stat-python-ver', 'connection-setup']) elements.delete(id);
+  savedLogin = obfuscate('enc::v2::', 'cli-proxy-api-webui::secure-storage|' + location.host);
+  await context.initializeManagement();
+  assert.equal(el('stat-python-ver').textContent, 'Python 3.12.0');
+  assert.equal(el('connection-setup').hidden, true);
+  console.log('PASS current panel login format (enc::v2, no user agent) connects automatically');
 
   mode = 'wrong';
   await context.loadAll();
@@ -180,7 +189,7 @@ class ManagementUITest(unittest.TestCase):
             capture_output=True, text=True, encoding="utf-8", timeout=20,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(result.stdout.count("PASS "), 13, result.stdout)
+        self.assertEqual(result.stdout.count("PASS "), 14, result.stdout)
         print(result.stdout, end="")
 
 
